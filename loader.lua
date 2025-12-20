@@ -9,6 +9,7 @@ local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 local AnimFolder = Workspace:WaitForChild("Animatronics")
@@ -29,21 +30,46 @@ local Window = Rayfield:CreateWindow({
 })
 
 local FNAFTab = Window:CreateTab("FNAF 1", 4483362458)
+local JanitorTab = Window:CreateTab("JanitorTasksESP", 4483362458)
 local SettingsTab = Window:CreateTab("Settings", 4483362458)
 
 --------------------------------------------------
--- ANIM CONFIG
+-- ANIM CONFIG (ALL OFF)
 --------------------------------------------------
 local Animatronics = {
-	Freddy = { Color = Color3.fromRGB(139,69,19), Enabled = true },
-	Bonnie = { Color = Color3.fromRGB(120,0,255), Enabled = true },
-	Chica = { Color = Color3.fromRGB(255,255,0), Enabled = true },
-	Foxy = { Color = Color3.fromRGB(255,0,0), Enabled = true },
-	GoldenFreddy = { Color = Color3.fromRGB(255,215,0), Enabled = true }
+	Freddy = { Color = Color3.fromRGB(139,69,19), Enabled = false },
+	Bonnie = { Color = Color3.fromRGB(120,0,255), Enabled = false },
+	Chica = { Color = Color3.fromRGB(255,255,0), Enabled = false },
+	Foxy = { Color = Color3.fromRGB(255,0,0), Enabled = false },
+	GoldenFreddy = { Color = Color3.fromRGB(255,215,0), Enabled = false }
 }
 
 --------------------------------------------------
--- ANIM ESP HELPERS
+-- FULLBRIGHT
+--------------------------------------------------
+local FullbrightEnabled = false
+local OriginalLighting = {
+	Brightness = Lighting.Brightness,
+	Ambient = Lighting.Ambient,
+	OutdoorAmbient = Lighting.OutdoorAmbient,
+	ClockTime = Lighting.ClockTime
+}
+
+local function EnableFullbright()
+	Lighting.Brightness = 3
+	Lighting.Ambient = Color3.new(1,1,1)
+	Lighting.OutdoorAmbient = Color3.new(1,1,1)
+	Lighting.ClockTime = 12
+end
+
+local function DisableFullbright()
+	for prop,val in pairs(OriginalLighting) do
+		Lighting[prop] = val
+	end
+end
+
+--------------------------------------------------
+-- ANIM ESP HELPERS (NAME + DISTANCE)
 --------------------------------------------------
 local function ClearAnimESP(npc)
 	if npc:FindFirstChild("__AnimHL") then npc.__AnimHL:Destroy() end
@@ -65,7 +91,7 @@ local function AddAnimESP(npc, name, color)
 
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "__AnimGUI"
-	gui.Size = UDim2.new(0,180,0,40)
+	gui.Size = UDim2.new(0,160,0,36)
 	gui.StudsOffset = Vector3.new(0,3.2,0)
 	gui.AlwaysOnTop = true
 	gui.Adornee = npc.HumanoidRootPart
@@ -94,25 +120,16 @@ local function AddAnimESP(npc, name, color)
 	dist.Parent = gui
 end
 
---------------------------------------------------
--- APPLY ANIM ESP
---------------------------------------------------
-local function ApplyAnimESP(animName)
-	local folder = AnimFolder:FindFirstChild(animName)
+local function ApplyAnimESP(name)
+	local folder = AnimFolder:FindFirstChild(name)
 	if not folder then return end
 
 	for _, npc in ipairs(folder:GetChildren()) do
-		if npc:IsA("Model") then
-			ClearAnimESP(npc)
-			if Animatronics[animName].Enabled then
-				AddAnimESP(npc, animName, Animatronics[animName].Color)
-			end
+		ClearAnimESP(npc)
+		if Animatronics[name].Enabled then
+			AddAnimESP(npc, name, Animatronics[name].Color)
 		end
 	end
-end
-
-for name in pairs(Animatronics) do
-	ApplyAnimESP(name)
 end
 
 --------------------------------------------------
@@ -172,18 +189,70 @@ local function UpdatePlayers()
 end
 
 --------------------------------------------------
+-- INSTANT PROMPT (JANITOR)
+--------------------------------------------------
+local PromptCache = {}
+local JanitorFolder =
+	Workspace:WaitForChild("GameTriggers")
+	:WaitForChild("JanitorTasks")
+
+local function ApplyInstantPrompt(prompt)
+	if not PromptCache[prompt] then
+		PromptCache[prompt] = {
+			HoldDuration = prompt.HoldDuration,
+			RequiresLineOfSight = prompt.RequiresLineOfSight,
+			MaxActivationDistance = prompt.MaxActivationDistance
+		}
+	end
+	prompt.HoldDuration = 0
+	prompt.RequiresLineOfSight = false
+	prompt.MaxActivationDistance = 20
+end
+
+local function RestorePrompt(prompt)
+	local d = PromptCache[prompt]
+	if not d then return end
+	prompt.HoldDuration = d.HoldDuration
+	prompt.RequiresLineOfSight = d.RequiresLineOfSight
+	prompt.MaxActivationDistance = d.MaxActivationDistance
+end
+
+--------------------------------------------------
 -- UI
 --------------------------------------------------
-for name, data in pairs(Animatronics) do
+FNAFTab:CreateToggle({
+	Name = "Enable All Animatronic ESP",
+	CurrentValue = false,
+	Callback = function(v)
+		for name,data in pairs(Animatronics) do
+			data.Enabled = v
+			ApplyAnimESP(name)
+		end
+	end
+})
+
+for name,data in pairs(Animatronics) do
 	FNAFTab:CreateToggle({
 		Name = name .. " ESP",
-		CurrentValue = true,
+		CurrentValue = false,
 		Callback = function(v)
 			data.Enabled = v
 			ApplyAnimESP(name)
 		end
 	})
 end
+
+JanitorTab:CreateToggle({
+	Name = "Instant Interact",
+	CurrentValue = false,
+	Callback = function(v)
+		for _, obj in ipairs(JanitorFolder:GetDescendants()) do
+			if obj:IsA("ProximityPrompt") then
+				if v then ApplyInstantPrompt(obj) else RestorePrompt(obj) end
+			end
+		end
+	end
+})
 
 SettingsTab:CreateToggle({
 	Name = "Player ESP",
@@ -194,19 +263,29 @@ SettingsTab:CreateToggle({
 	end
 })
 
+SettingsTab:CreateToggle({
+	Name = "Fullbright",
+	CurrentValue = false,
+	Callback = function(v)
+		FullbrightEnabled = v
+		if v then EnableFullbright() else DisableFullbright() end
+	end
+})
+
 --------------------------------------------------
--- UNLOAD FUNCTION
+-- UNLOAD
 --------------------------------------------------
 local function UnloadScript()
-	for _, folder in ipairs(AnimFolder:GetChildren()) do
-		for _, npc in ipairs(folder:GetChildren()) do
-			ClearAnimESP(npc)
-		end
+	for name in pairs(Animatronics) do
+		Animatronics[name].Enabled = false
+		ApplyAnimESP(name)
 	end
 
 	for _, p in ipairs(Players:GetPlayers()) do
 		ClearPlayerESP(p)
 	end
+
+	DisableFullbright()
 
 	for _, c in pairs(Connections) do
 		if c then c:Disconnect() end
@@ -223,61 +302,39 @@ SettingsTab:CreateButton({
 --------------------------------------------------
 -- DEATH HANDLER
 --------------------------------------------------
-local function HookDeath(character)
-	local hum = character:WaitForChild("Humanoid", 5)
+local function HookDeath(char)
+	local hum = char:WaitForChild("Humanoid",5)
 	if not hum then return end
 
 	hum.Died:Connect(function()
-		Rayfield:Notify({
-			Title = "Script Unloaded",
-			Content =
-				"You died.\n\n" ..
-				"This script MUST be re-executed.\n\n" ..
-				"It will not function after death.",
-			Duration = 8
-		})
-
-		task.delay(8, UnloadScript)
+		DisableFullbright()
+		task.delay(2, UnloadScript)
 	end)
 end
 
-if LocalPlayer.Character then
-	HookDeath(LocalPlayer.Character)
-end
-
+if LocalPlayer.Character then HookDeath(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(HookDeath)
 
 --------------------------------------------------
--- STARTUP NOTICE
+-- NOTIFICATIONS
 --------------------------------------------------
 Rayfield:Notify({
 	Title = "Important Notice",
 	Content =
-		"This script is intended to be executed:\n\n" ..
-		"• At the START of the night (recommended)\n\n" ..
-		"You MUST re-execute the script:\n" ..
-		"• If the player dies\n" ..
-		"• After a night recap\n\n" ..
-		"Do NOT execute during the recap.",
+		"Execute this script at the START of the night.\n\n" ..
+		"Re-execute if you die or after a night recap.\n\n" ..
+		"Do NOT execute during recap.",
 	Duration = 8
 })
 
---------------------------------------------------
--- UI KEYBIND NOTICE
---------------------------------------------------
 Rayfield:Notify({
 	Title = "UI Controls",
-	Content =
-		"The keybind to open and close this script menu is:\n\n" ..
-		"• K",
+	Content = "Toggle the UI with:\n\n• K",
 	Duration = 8
 })
 
---------------------------------------------------
--- READY
---------------------------------------------------
 Rayfield:Notify({
 	Title = "Loaded",
-	Content = "ESP active.",
+	Content = "All features are OFF by default.",
 	Duration = 5
 })
