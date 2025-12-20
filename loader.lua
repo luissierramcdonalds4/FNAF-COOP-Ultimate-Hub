@@ -221,7 +221,7 @@ SettingsTab:CreateButton({
 })
 
 --------------------------------------------------
--- DEATH HANDLER (8s NOTIFY)
+-- DEATH HANDLER
 --------------------------------------------------
 local function HookDeath(character)
 	local hum = character:WaitForChild("Humanoid", 5)
@@ -248,15 +248,28 @@ end
 LocalPlayer.CharacterAdded:Connect(HookDeath)
 
 --------------------------------------------------
--- STARTUP WARNING (8s NOTIFY)
+-- STARTUP NOTICE
 --------------------------------------------------
 Rayfield:Notify({
 	Title = "Important Notice",
 	Content =
-		"This script MUST be re-executed:\n\n" ..
-		"• After every night recap\n" ..
-		"• If the player dies\n\n" ..
-		"Failure to do so will cause it to stop working.",
+		"This script is intended to be executed:\n\n" ..
+		"• At the START of the night (recommended)\n\n" ..
+		"You MUST re-execute the script:\n" ..
+		"• If the player dies\n" ..
+		"• After a night recap\n\n" ..
+		"Do NOT execute during the recap.",
+	Duration = 8
+})
+
+--------------------------------------------------
+-- UI KEYBIND NOTICE
+--------------------------------------------------
+Rayfield:Notify({
+	Title = "UI Controls",
+	Content =
+		"The keybind to open and close this script menu is:\n\n" ..
+		"• K",
 	Duration = 8
 })
 
