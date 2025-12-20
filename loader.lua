@@ -10,6 +10,7 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local AnimFolder = Workspace:WaitForChild("Animatronics")
@@ -47,7 +48,6 @@ local Animatronics = {
 --------------------------------------------------
 -- FULLBRIGHT
 --------------------------------------------------
-local FullbrightEnabled = false
 local OriginalLighting = {
 	Brightness = Lighting.Brightness,
 	Ambient = Lighting.Ambient,
@@ -63,13 +63,13 @@ local function EnableFullbright()
 end
 
 local function DisableFullbright()
-	for prop,val in pairs(OriginalLighting) do
-		Lighting[prop] = val
+	for k, v in pairs(OriginalLighting) do
+		Lighting[k] = v
 	end
 end
 
 --------------------------------------------------
--- ANIM ESP HELPERS (NAME + DISTANCE)
+-- ANIM ESP (NAME + DISTANCE)
 --------------------------------------------------
 local function ClearAnimESP(npc)
 	if npc:FindFirstChild("__AnimHL") then npc.__AnimHL:Destroy() end
@@ -77,7 +77,6 @@ local function ClearAnimESP(npc)
 end
 
 local function AddAnimESP(npc, name, color)
-	if npc:FindFirstChild("__AnimHL") then return end
 	if not npc:FindFirstChild("HumanoidRootPart") then return end
 
 	local hl = Instance.new("Highlight")
@@ -91,7 +90,7 @@ local function AddAnimESP(npc, name, color)
 
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "__AnimGUI"
-	gui.Size = UDim2.new(0,160,0,36)
+	gui.Size = UDim2.new(0,180,0,40)
 	gui.StudsOffset = Vector3.new(0,3.2,0)
 	gui.AlwaysOnTop = true
 	gui.Adornee = npc.HumanoidRootPart
@@ -133,7 +132,7 @@ local function ApplyAnimESP(name)
 end
 
 --------------------------------------------------
--- DISTANCE UPDATE
+-- DISTANCE UPDATE (FIXED)
 --------------------------------------------------
 Connections.Distance = RunService.RenderStepped:Connect(function()
 	local char = LocalPlayer.Character
@@ -143,30 +142,31 @@ Connections.Distance = RunService.RenderStepped:Connect(function()
 	for _, folder in ipairs(AnimFolder:GetChildren()) do
 		for _, npc in ipairs(folder:GetChildren()) do
 			if npc:FindFirstChild("__AnimGUI") and npc:FindFirstChild("HumanoidRootPart") then
-				npc.__AnimGUI.Dist.Text =
-					math.floor((root - npc.HumanoidRootPart.Position).Magnitude) .. " studs"
+				local distLabel = npc.__AnimGUI:FindFirstChild("Dist")
+				if distLabel then
+					distLabel.Text =
+						math.floor((root - npc.HumanoidRootPart.Position).Magnitude) .. " studs"
+				end
 			end
 		end
 	end
 end)
 
 --------------------------------------------------
--- PLAYER ESP (HIGHLIGHT ONLY)
+-- PLAYER ESP
 --------------------------------------------------
 local PlayerESPEnabled = false
 local PLAYER_COLOR = Color3.fromRGB(0,255,255)
 
-local function ClearPlayerESP(player)
-	local c = player.Character
-	if not c then return end
-	if c:FindFirstChild("__PlayerHL") then c.__PlayerHL:Destroy() end
+local function ClearPlayerESP(p)
+	if p.Character and p.Character:FindFirstChild("__PlayerHL") then
+		p.Character.__PlayerHL:Destroy()
+	end
 end
 
-local function AddPlayerESP(player)
-	if player == LocalPlayer then return end
-	local c = player.Character
-	if not c then return end
-	if c:FindFirstChild("__PlayerHL") then return end
+local function AddPlayerESP(p)
+	if p == LocalPlayer then return end
+	if not p.Character or p.Character:FindFirstChild("__PlayerHL") then return end
 
 	local hl = Instance.new("Highlight")
 	hl.Name = "__PlayerHL"
@@ -174,48 +174,39 @@ local function AddPlayerESP(player)
 	hl.OutlineColor = PLAYER_COLOR
 	hl.FillTransparency = 0.85
 	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	hl.Adornee = c
-	hl.Parent = c
+	hl.Adornee = p.Character
+	hl.Parent = p.Character
 end
 
-local function UpdatePlayers()
-	for _, p in ipairs(Players:GetPlayers()) do
-		if PlayerESPEnabled then
-			AddPlayerESP(p)
-		else
-			ClearPlayerESP(p)
+--------------------------------------------------
+-- JANITOR INSTANT PROMPT
+--------------------------------------------------
+local InstantPromptEnabled = false
+
+local function ApplyInstantPrompt()
+	for _, obj in ipairs(Workspace:GetDescendants()) do
+		if obj:IsA("ProximityPrompt") then
+			obj.HoldDuration = InstantPromptEnabled and 0 or obj.HoldDuration
 		end
 	end
 end
 
 --------------------------------------------------
--- INSTANT PROMPT (JANITOR)
+-- NIGHT GUARD MODE (P)
 --------------------------------------------------
-local PromptCache = {}
-local JanitorFolder =
-	Workspace:WaitForChild("GameTriggers")
-	:WaitForChild("JanitorTasks")
+local function GetNightGuardGui()
+	return LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("NightGuardModeGui")
+end
 
-local function ApplyInstantPrompt(prompt)
-	if not PromptCache[prompt] then
-		PromptCache[prompt] = {
-			HoldDuration = prompt.HoldDuration,
-			RequiresLineOfSight = prompt.RequiresLineOfSight,
-			MaxActivationDistance = prompt.MaxActivationDistance
-		}
+Connections.NightGuardKey = UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode == Enum.KeyCode.P then
+		local gui = GetNightGuardGui()
+		if gui then
+			gui.Enabled = not gui.Enabled
+		end
 	end
-	prompt.HoldDuration = 0
-	prompt.RequiresLineOfSight = false
-	prompt.MaxActivationDistance = 20
-end
-
-local function RestorePrompt(prompt)
-	local d = PromptCache[prompt]
-	if not d then return end
-	prompt.HoldDuration = d.HoldDuration
-	prompt.RequiresLineOfSight = d.RequiresLineOfSight
-	prompt.MaxActivationDistance = d.MaxActivationDistance
-end
+end)
 
 --------------------------------------------------
 -- UI
@@ -224,33 +215,39 @@ FNAFTab:CreateToggle({
 	Name = "Enable All Animatronic ESP",
 	CurrentValue = false,
 	Callback = function(v)
-		for name,data in pairs(Animatronics) do
-			data.Enabled = v
+		for name in pairs(Animatronics) do
+			Animatronics[name].Enabled = v
 			ApplyAnimESP(name)
 		end
 	end
 })
 
-for name,data in pairs(Animatronics) do
+for name in pairs(Animatronics) do
 	FNAFTab:CreateToggle({
 		Name = name .. " ESP",
 		CurrentValue = false,
 		Callback = function(v)
-			data.Enabled = v
+			Animatronics[name].Enabled = v
 			ApplyAnimESP(name)
 		end
 	})
 end
 
+FNAFTab:CreateToggle({
+	Name = "Night Guard Mode (Keybind: P)",
+	CurrentValue = false,
+	Callback = function(v)
+		local gui = GetNightGuardGui()
+		if gui then gui.Enabled = v end
+	end
+})
+
 JanitorTab:CreateToggle({
 	Name = "Instant Interact",
 	CurrentValue = false,
 	Callback = function(v)
-		for _, obj in ipairs(JanitorFolder:GetDescendants()) do
-			if obj:IsA("ProximityPrompt") then
-				if v then ApplyInstantPrompt(obj) else RestorePrompt(obj) end
-			end
-		end
+		InstantPromptEnabled = v
+		ApplyInstantPrompt()
 	end
 })
 
@@ -259,7 +256,9 @@ SettingsTab:CreateToggle({
 	CurrentValue = false,
 	Callback = function(v)
 		PlayerESPEnabled = v
-		UpdatePlayers()
+		for _, p in ipairs(Players:GetPlayers()) do
+			if v then AddPlayerESP(p) else ClearPlayerESP(p) end
+		end
 	end
 })
 
@@ -267,7 +266,6 @@ SettingsTab:CreateToggle({
 	Name = "Fullbright",
 	CurrentValue = false,
 	Callback = function(v)
-		FullbrightEnabled = v
 		if v then EnableFullbright() else DisableFullbright() end
 	end
 })
@@ -276,16 +274,11 @@ SettingsTab:CreateToggle({
 -- UNLOAD
 --------------------------------------------------
 local function UnloadScript()
-	for name in pairs(Animatronics) do
-		Animatronics[name].Enabled = false
-		ApplyAnimESP(name)
-	end
+	DisableFullbright()
 
 	for _, p in ipairs(Players:GetPlayers()) do
 		ClearPlayerESP(p)
 	end
-
-	DisableFullbright()
 
 	for _, c in pairs(Connections) do
 		if c then c:Disconnect() end
@@ -300,15 +293,23 @@ SettingsTab:CreateButton({
 })
 
 --------------------------------------------------
--- DEATH HANDLER
+-- DEATH HANDLER (NOTIFY + UNLOAD)
 --------------------------------------------------
 local function HookDeath(char)
 	local hum = char:WaitForChild("Humanoid",5)
 	if not hum then return end
 
 	hum.Died:Connect(function()
-		DisableFullbright()
-		task.delay(2, UnloadScript)
+		Rayfield:Notify({
+			Title = "Script Unloaded",
+			Content =
+				"You died.\n\n" ..
+				"This script MUST be re-executed.\n\n" ..
+				"It will not function after death.",
+			Duration = 8
+		})
+
+		task.delay(8, UnloadScript)
 	end)
 end
 
@@ -320,16 +321,13 @@ LocalPlayer.CharacterAdded:Connect(HookDeath)
 --------------------------------------------------
 Rayfield:Notify({
 	Title = "Important Notice",
-	Content =
-		"Execute this script at the START of the night.\n\n" ..
-		"Re-execute if you die or after a night recap.\n\n" ..
-		"Do NOT execute during recap.",
+	Content = "Execute at the START of the night.\nRe-execute on death or recap.",
 	Duration = 8
 })
 
 Rayfield:Notify({
 	Title = "UI Controls",
-	Content = "Toggle the UI with:\n\n• K",
+	Content = "Toggle UI: K\nNight Guard Mode: P",
 	Duration = 8
 })
 
