@@ -21,6 +21,26 @@ local AnimFolder = Workspace:WaitForChild("Animatronics")
 local Connections = {}
 
 --------------------------------------------------
+-- CREDIT LABEL (ALWAYS VISIBLE)
+--------------------------------------------------
+local CreditGui = Instance.new("ScreenGui")
+CreditGui.Name = "AftonCreditGui"
+CreditGui.ResetOnSpawn = false
+CreditGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+CreditGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local Credit = Instance.new("TextLabel")
+Credit.Size = UDim2.new(0,300,0,20)
+Credit.Position = UDim2.new(0.5,-150,0.02,0)
+Credit.BackgroundTransparency = 1
+Credit.Text = "Script by Afton-Robotics"
+Credit.Font = Enum.Font.GothamMedium
+Credit.TextSize = 14
+Credit.TextColor3 = Color3.fromRGB(200,200,200)
+Credit.TextStrokeTransparency = 0.6
+Credit.Parent = CreditGui
+
+--------------------------------------------------
 -- WINDOW
 --------------------------------------------------
 local Window = Rayfield:CreateWindow({
@@ -31,15 +51,12 @@ local Window = Rayfield:CreateWindow({
 })
 
 local FNAFTab = Window:CreateTab("FNAF 1", 4483362458)
-
--- ✅ NEW TAB
 local NightGuardPlusTab = Window:CreateTab("NightGuard+", 4483362458)
-
-local JanitorTab = Window:CreateTab("JanitorTasksESP", 4483362458)
+local JanitorTab = Window:CreateTab("JanitorTasks", 4483362458)
 local SettingsTab = Window:CreateTab("Settings", 4483362458)
 
 --------------------------------------------------
--- NIGHTGUARD+ FEATURES
+-- NIGHTGUARD+ TAB
 --------------------------------------------------
 NightGuardPlusTab:CreateButton({
 	Name = "FNAF1 Door Detection",
@@ -52,7 +69,7 @@ NightGuardPlusTab:CreateButton({
 })
 
 --------------------------------------------------
--- ANIM CONFIG (ALL OFF)
+-- ANIM CONFIG
 --------------------------------------------------
 local Animatronics = {
 	Freddy = { Color = Color3.fromRGB(139,69,19), Enabled = false },
@@ -80,70 +97,69 @@ local function EnableFullbright()
 end
 
 local function DisableFullbright()
-	for k, v in pairs(OriginalLighting) do
+	for k,v in pairs(OriginalLighting) do
 		Lighting[k] = v
 	end
 end
 
 --------------------------------------------------
--- ANIM ESP (NAME + DISTANCE)
+-- ANIM ESP
 --------------------------------------------------
 local function ClearAnimESP(npc)
 	if npc:FindFirstChild("__AnimHL") then npc.__AnimHL:Destroy() end
 	if npc:FindFirstChild("__AnimGUI") then npc.__AnimGUI:Destroy() end
 end
 
-local function AddAnimESP(npc, name, color)
+local function AddAnimESP(npc,name,color)
 	if not npc:FindFirstChild("HumanoidRootPart") then return end
 
 	local hl = Instance.new("Highlight")
-	hl.Name = "__AnimHL"
-	hl.FillColor = color
-	hl.OutlineColor = color
-	hl.FillTransparency = 0.85
-	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	hl.Adornee = npc
-	hl.Parent = npc
+	hl.Name="__AnimHL"
+	hl.FillColor=color
+	hl.OutlineColor=color
+	hl.FillTransparency=0.85
+	hl.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Adornee=npc
+	hl.Parent=npc
 
-	local gui = Instance.new("BillboardGui")
-	gui.Name = "__AnimGUI"
-	gui.Size = UDim2.new(0,180,0,40)
-	gui.StudsOffset = Vector3.new(0,3.2,0)
-	gui.AlwaysOnTop = true
-	gui.Adornee = npc.HumanoidRootPart
-	gui.Parent = npc
+	local gui=Instance.new("BillboardGui")
+	gui.Name="__AnimGUI"
+	gui.Size=UDim2.new(0,180,0,40)
+	gui.StudsOffset=Vector3.new(0,3.2,0)
+	gui.AlwaysOnTop=true
+	gui.Adornee=npc.HumanoidRootPart
+	gui.Parent=npc
 
-	local nameLbl = Instance.new("TextLabel")
-	nameLbl.Size = UDim2.new(1,0,0.5,0)
-	nameLbl.BackgroundTransparency = 1
-	nameLbl.TextSize = 13
-	nameLbl.Font = Enum.Font.GothamBold
-	nameLbl.TextColor3 = color
-	nameLbl.TextStrokeTransparency = 0.3
-	nameLbl.Text = name
-	nameLbl.Parent = gui
+	local nameLbl=Instance.new("TextLabel")
+	nameLbl.Size=UDim2.new(1,0,0.5,0)
+	nameLbl.BackgroundTransparency=1
+	nameLbl.Font=Enum.Font.GothamBold
+	nameLbl.TextScaled=true
+	nameLbl.TextColor3=color
+	nameLbl.TextStrokeTransparency=0.3
+	nameLbl.Text=name
+	nameLbl.Parent=gui
 
-	local dist = Instance.new("TextLabel")
-	dist.Name = "Dist"
-	dist.Position = UDim2.new(0,0,0.5,0)
-	dist.Size = UDim2.new(1,0,0.5,0)
-	dist.BackgroundTransparency = 1
-	dist.TextSize = 12
-	dist.Font = Enum.Font.Gotham
-	dist.TextColor3 = Color3.new(1,1,1)
-	dist.TextStrokeTransparency = 0.4
-	dist.Text = "0 studs"
-	dist.Parent = gui
+	local dist=Instance.new("TextLabel")
+	dist.Name="Dist"
+	dist.Position=UDim2.new(0,0,0.5,0)
+	dist.Size=UDim2.new(1,0,0.5,0)
+	dist.BackgroundTransparency=1
+	dist.Font=Enum.Font.Gotham
+	dist.TextScaled=true
+	dist.TextColor3=Color3.new(1,1,1)
+	dist.TextStrokeTransparency=0.4
+	dist.Text="0 studs"
+	dist.Parent=gui
 end
 
 local function ApplyAnimESP(name)
-	local folder = AnimFolder:FindFirstChild(name)
+	local folder=AnimFolder:FindFirstChild(name)
 	if not folder then return end
-
-	for _, npc in ipairs(folder:GetChildren()) do
+	for _,npc in ipairs(folder:GetChildren()) do
 		ClearAnimESP(npc)
 		if Animatronics[name].Enabled then
-			AddAnimESP(npc, name, Animatronics[name].Color)
+			AddAnimESP(npc,name,Animatronics[name].Color)
 		end
 	end
 end
@@ -151,18 +167,17 @@ end
 --------------------------------------------------
 -- DISTANCE UPDATE
 --------------------------------------------------
-Connections.Distance = RunService.RenderStepped:Connect(function()
-	local char = LocalPlayer.Character
+Connections.Distance=RunService.RenderStepped:Connect(function()
+	local char=LocalPlayer.Character
 	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-	local root = char.HumanoidRootPart.Position
+	local root=char.HumanoidRootPart.Position
 
-	for _, folder in ipairs(AnimFolder:GetChildren()) do
-		for _, npc in ipairs(folder:GetChildren()) do
+	for _,folder in ipairs(AnimFolder:GetChildren()) do
+		for _,npc in ipairs(folder:GetChildren()) do
 			if npc:FindFirstChild("__AnimGUI") and npc:FindFirstChild("HumanoidRootPart") then
-				local distLabel = npc.__AnimGUI:FindFirstChild("Dist")
-				if distLabel then
-					distLabel.Text =
-						math.floor((root - npc.HumanoidRootPart.Position).Magnitude) .. " studs"
+				local d=npc.__AnimGUI:FindFirstChild("Dist")
+				if d then
+					d.Text=math.floor((root-npc.HumanoidRootPart.Position).Magnitude).." studs"
 				end
 			end
 		end
@@ -170,50 +185,128 @@ Connections.Distance = RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
--- UI TOGGLES
+-- PLAYER ESP
+--------------------------------------------------
+local PlayerESP=false
+local PLAYER_COLOR=Color3.fromRGB(0,255,255)
+
+local function ClearPlayerESP(p)
+	if p.Character and p.Character:FindFirstChild("__PlayerHL") then
+		p.Character.__PlayerHL:Destroy()
+	end
+end
+
+local function AddPlayerESP(p)
+	if p==LocalPlayer then return end
+	if not p.Character or p.Character:FindFirstChild("__PlayerHL") then return end
+
+	local hl=Instance.new("Highlight")
+	hl.Name="__PlayerHL"
+	hl.FillColor=PLAYER_COLOR
+	hl.OutlineColor=PLAYER_COLOR
+	hl.FillTransparency=0.85
+	hl.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Adornee=p.Character
+	hl.Parent=p.Character
+end
+
+--------------------------------------------------
+-- INSTANT PROMPT
+--------------------------------------------------
+local InstantPrompt=false
+local function ApplyInstantPrompt()
+	for _,obj in ipairs(Workspace:GetDescendants()) do
+		if obj:IsA("ProximityPrompt") then
+			obj.HoldDuration=InstantPrompt and 0 or obj.HoldDuration
+		end
+	end
+end
+
+--------------------------------------------------
+-- NIGHT GUARD MODE (P)
+--------------------------------------------------
+local function GetNightGuardGui()
+	return LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("NightGuardModeGui")
+end
+
+Connections.NightGuardKey=UserInputService.InputBegan:Connect(function(input,gpe)
+	if gpe then return end
+	if input.KeyCode==Enum.KeyCode.P then
+		local gui=GetNightGuardGui()
+		if gui then gui.Enabled=not gui.Enabled end
+	end
+end)
+
+--------------------------------------------------
+-- UI
 --------------------------------------------------
 FNAFTab:CreateToggle({
-	Name = "Enable All Animatronic ESP",
-	CurrentValue = false,
-	Callback = function(v)
-		for name in pairs(Animatronics) do
-			Animatronics[name].Enabled = v
-			ApplyAnimESP(name)
+	Name="Enable All Animatronic ESP",
+	CurrentValue=false,
+	Callback=function(v)
+		for n in pairs(Animatronics) do
+			Animatronics[n].Enabled=v
+			ApplyAnimESP(n)
 		end
 	end
 })
 
-for name in pairs(Animatronics) do
+for n in pairs(Animatronics) do
 	FNAFTab:CreateToggle({
-		Name = name .. " ESP",
-		CurrentValue = false,
-		Callback = function(v)
-			Animatronics[name].Enabled = v
-			ApplyAnimESP(name)
+		Name=n.." ESP",
+		CurrentValue=false,
+		Callback=function(v)
+			Animatronics[n].Enabled=v
+			ApplyAnimESP(n)
 		end
 	})
 end
 
---------------------------------------------------
--- SETTINGS
---------------------------------------------------
+FNAFTab:CreateToggle({
+	Name="Night Guard Mode (Keybind: P)",
+	CurrentValue=false,
+	Callback=function(v)
+		local gui=GetNightGuardGui()
+		if gui then gui.Enabled=v end
+	end
+})
+
+JanitorTab:CreateToggle({
+	Name="Instant Interact",
+	CurrentValue=false,
+	Callback=function(v)
+		InstantPrompt=v
+		ApplyInstantPrompt()
+	end
+})
+
 SettingsTab:CreateToggle({
-	Name = "Fullbright",
-	CurrentValue = false,
-	Callback = function(v)
+	Name="Player ESP",
+	CurrentValue=false,
+	Callback=function(v)
+		PlayerESP=v
+		for _,p in ipairs(Players:GetPlayers()) do
+			if v then AddPlayerESP(p) else ClearPlayerESP(p) end
+		end
+	end
+})
+
+SettingsTab:CreateToggle({
+	Name="Fullbright",
+	CurrentValue=false,
+	Callback=function(v)
 		if v then EnableFullbright() else DisableFullbright() end
 	end
 })
 
 --------------------------------------------------
--- UNLOAD
+-- UNLOAD BUTTON (RESTORED)
 --------------------------------------------------
 local function UnloadScript()
 	DisableFullbright()
-	for _, c in pairs(Connections) do
-		if c then c:Disconnect() end
-	end
+	for _,c in pairs(Connections) do if c then c:Disconnect() end end
 	Rayfield:Destroy()
+	if CreditGui then CreditGui:Destroy() end
 end
 
 SettingsTab:CreateButton({
@@ -225,22 +318,18 @@ SettingsTab:CreateButton({
 -- DEATH HANDLER
 --------------------------------------------------
 local function HookDeath(char)
-	local hum = char:WaitForChild("Humanoid",5)
-	if not hum then return end
-
-	hum.Died:Connect(function()
-		task.delay(0, UnloadScript)
-	end)
+	local hum=char:WaitForChild("Humanoid",5)
+	if hum then hum.Died:Connect(UnloadScript) end
 end
 
 if LocalPlayer.Character then HookDeath(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(HookDeath)
 
 --------------------------------------------------
--- NOTIFY
+-- FINAL NOTIFY
 --------------------------------------------------
 Rayfield:Notify({
-	Title = "Loaded",
-	Content = "All features are OFF by default.",
-	Duration = 5
+	Title="Loaded",
+	Content="All features OFF by default.",
+	Duration=5
 })
