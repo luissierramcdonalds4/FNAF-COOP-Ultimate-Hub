@@ -5,7 +5,7 @@ local REQUIRED_KEY = "5735932"
 local KEY_DURATION = 2 * 60 * 60 -- 2 hours
 local SAVE_FILE = "FNAF_COOP_KeyTime.txt"
 
-local HUB_URL = "https://raw.githubusercontent.com/luissierramcdonalds4/FNAF-COOP-Ultimate-Hub/main/loader.lua"
+local HUB_URL = "https://raw.githubusercontent.com/luissierramcdonalds4/FNAF-COOP-Ultimate-Hub/refs/heads/main/loader.lua"
 
 --------------------------------------------------
 -- SERVICES
