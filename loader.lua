@@ -60,7 +60,7 @@ local SettingsTab = Window:CreateTab("Settings", 4483362458)
 --------------------------------------------------
 Rayfield:Notify({
 	Title = "Controls",
-	Content = "Open/Close keybind: K",
+	Content = "Night Guard Mode keybind: P",
 	Duration = 6
 })
 
@@ -182,17 +182,17 @@ end
 --------------------------------------------------
 -- DISTANCE UPDATE
 --------------------------------------------------
-Connections.Distance=RunService.RenderStepped:Connect(function()
-	local char=LocalPlayer.Character
+Connections.Distance = RunService.RenderStepped:Connect(function()
+	local char = LocalPlayer.Character
 	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-	local root=char.HumanoidRootPart.Position
+	local root = char.HumanoidRootPart.Position
 
 	for _,folder in ipairs(AnimFolder:GetChildren()) do
 		for _,npc in ipairs(folder:GetChildren()) do
 			if npc:FindFirstChild("__AnimGUI") and npc:FindFirstChild("HumanoidRootPart") then
-				local d=npc.__AnimGUI:FindFirstChild("Dist")
+				local d = npc.__AnimGUI:FindFirstChild("Dist")
 				if d then
-					d.Text=math.floor((root-npc.HumanoidRootPart.Position).Magnitude).." studs"
+					d.Text = math.floor((root-npc.HumanoidRootPart.Position).Magnitude).." studs"
 				end
 			end
 		end
@@ -200,28 +200,54 @@ Connections.Distance=RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
--- PLAYER ESP
+-- PLAYER ESP (NAME + LEVEL)
 --------------------------------------------------
-local PLAYER_COLOR=Color3.fromRGB(0,255,255)
+local PLAYER_COLOR = Color3.fromRGB(0,255,255)
 
 local function ClearPlayerESP(p)
-	if p.Character and p.Character:FindFirstChild("__PlayerHL") then
-		p.Character.__PlayerHL:Destroy()
-	end
+	if not p.Character then return end
+	if p.Character:FindFirstChild("__PlayerHL") then p.Character.__PlayerHL:Destroy() end
+	if p.Character:FindFirstChild("__PlayerGUI") then p.Character.__PlayerGUI:Destroy() end
 end
 
 local function AddPlayerESP(p)
-	if p==LocalPlayer then return end
-	if not p.Character or p.Character:FindFirstChild("__PlayerHL") then return end
+	if p == LocalPlayer then return end
+	if not p.Character then return end
+	if p.Character:FindFirstChild("__PlayerHL") then return end
 
-	local hl=Instance.new("Highlight")
+	local char = p.Character
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	local hl = Instance.new("Highlight")
 	hl.Name="__PlayerHL"
 	hl.FillColor=PLAYER_COLOR
 	hl.OutlineColor=PLAYER_COLOR
 	hl.FillTransparency=0.85
 	hl.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
-	hl.Adornee=p.Character
-	hl.Parent=p.Character
+	hl.Adornee=char
+	hl.Parent=char
+
+	local gui = Instance.new("BillboardGui")
+	gui.Name="__PlayerGUI"
+	gui.Adornee=hrp
+	gui.Size=UDim2.new(0,160,0,24)
+	gui.StudsOffset=Vector3.new(0,3.5,0)
+	gui.AlwaysOnTop=true
+	gui.Parent=char
+
+	local level = p:GetAttribute("playerLevelConverted")
+	if level == nil then level = "?" end
+
+	local txt = Instance.new("TextLabel")
+	txt.Size=UDim2.new(1,0,1,0)
+	txt.BackgroundTransparency=1
+	txt.Font=Enum.Font.Gotham
+	txt.TextSize=12
+	txt.TextColor3=PLAYER_COLOR
+	txt.TextStrokeTransparency=0.5
+	txt.Text = p.Name.." ["..tostring(level).."]"
+	txt.Parent=gui
 end
 
 --------------------------------------------------
@@ -249,11 +275,11 @@ local function GetNightGuardGui()
 	return LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("NightGuardModeGui")
 end
 
-Connections.NightGuardKey=UserInputService.InputBegan:Connect(function(input,gpe)
+Connections.NightGuardKey = UserInputService.InputBegan:Connect(function(input,gpe)
 	if gpe then return end
-	if input.KeyCode==Enum.KeyCode.P then
-		local gui=GetNightGuardGui()
-		if gui then gui.Enabled=not gui.Enabled end
+	if input.KeyCode == Enum.KeyCode.P then
+		local gui = GetNightGuardGui()
+		if gui then gui.Enabled = not gui.Enabled end
 	end
 end)
 
@@ -282,12 +308,13 @@ for n in pairs(Animatronics) do
 	})
 end
 
+-- ✅ RESTORED NIGHT GUARD TOGGLE
 FNAFTab:CreateToggle({
 	Name="Night Guard Mode (Keybind: P)",
 	CurrentValue=false,
 	Callback=function(v)
-		local gui=GetNightGuardGui()
-		if gui then gui.Enabled=v end
+		local gui = GetNightGuardGui()
+		if gui then gui.Enabled = v end
 	end
 })
 
@@ -319,7 +346,7 @@ SettingsTab:CreateToggle({
 })
 
 --------------------------------------------------
--- UNLOAD (FULL CLEAN)
+-- UNLOAD
 --------------------------------------------------
 local function DisableAllFeatures()
 	for n,data in pairs(Animatronics) do
@@ -331,26 +358,21 @@ local function DisableAllFeatures()
 			end
 		end
 	end
-
 	for _,p in ipairs(Players:GetPlayers()) do
 		ClearPlayerESP(p)
 	end
-
 	InstantPrompt=false
 	ApplyInstantPrompt()
 	DisableFullbright()
-
 	local ng=GetNightGuardGui()
 	if ng then ng.Enabled=false end
 end
 
 local function UnloadScript(auto)
 	DisableAllFeatures()
-
 	for _,c in pairs(Connections) do
 		if c then c:Disconnect() end
 	end
-
 	if auto then
 		Rayfield:Notify({
 			Title="Script Unloaded",
@@ -359,7 +381,6 @@ local function UnloadScript(auto)
 		})
 		task.wait(1.2)
 	end
-
 	Rayfield:Destroy()
 	if CreditGui then CreditGui:Destroy() end
 end
