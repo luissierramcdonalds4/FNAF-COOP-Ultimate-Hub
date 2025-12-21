@@ -117,7 +117,7 @@ KeyTab:CreateButton({
 	Name = "Get Key (Join Discord)",
 	Callback = function()
 		if setclipboard then
-			setclipboard("https://discord.gg/dY6XJ2WDaU")
+			setclipboard("https://discord.gg/5bNptAsNgg")
 			Rayfield:Notify({
 				Title = "Copied",
 				Content = "Discord server link copied to clipboard.",
