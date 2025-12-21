@@ -2,7 +2,7 @@
 -- CONFIG
 --------------------------------------------------
 local REQUIRED_KEY = "5735932"
-local KEY_DURATION = 12 * 60 * 60 -- 12 hours
+local KEY_DURATION = 2 * 60 * 60 -- 2 hours
 local SAVE_FILE = "FNAF_COOP_KeyTime.txt"
 
 local HUB_URL = "https://raw.githubusercontent.com/luissierramcdonalds4/FNAF-COOP-Ultimate-Hub/main/loader.lua"
@@ -113,7 +113,7 @@ KeyTab:CreateButton({
 KeyTab:CreateParagraph({
 	Title = "Notice",
 	Content =
-		"The access key is required every 12 hours.\n\n" ..
+		"The access key is required every 2 hours.\n\n" ..
 		"If your key expires, the loader will reappear\n" ..
 		"and you must enter the key again."
 })
