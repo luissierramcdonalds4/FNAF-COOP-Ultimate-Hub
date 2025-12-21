@@ -112,6 +112,32 @@ KeyTab:CreateButton({
 	end
 })
 
+--------------------------------------------------
+-- DISCORD BUTTON (NEW)
+--------------------------------------------------
+KeyTab:CreateButton({
+	Name = "Get Key (Join Discord)",
+	Callback = function()
+		if setclipboard then
+			setclipboard("https://discord.gg/dY6XJ2WDaU")
+			Rayfield:Notify({
+				Title = "Copied",
+				Content = "Discord invite copied to clipboard.",
+				Duration = 4
+			})
+		else
+			Rayfield:Notify({
+				Title = "Error",
+				Content = "Clipboard not supported by your executor.",
+				Duration = 4
+			})
+		end
+	end
+})
+
+--------------------------------------------------
+-- NOTICE
+--------------------------------------------------
 KeyTab:CreateParagraph({
 	Title = "Notice",
 	Content =
