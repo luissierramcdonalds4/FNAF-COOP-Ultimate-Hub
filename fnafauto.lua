@@ -141,8 +141,8 @@ conn = RunService.RenderStepped:Connect(function()
 	-- BONNIE (14–16 studs)
 	--------------------------------------------------
 	if BonnieHRP then
-		local d = (hrp.Position - BonnieHRP.Position).Magnitude
-		if d>=14 and d<=16 then
+		local d = math.floor((hrp.Position - BonnieHRP.Position).Magnitude)
+		if d==14 or d==15 or d==16 then
 			BonnieLabel.Text="BONNIE\nLEFT DOOR"
 			BonnieLabel.TextColor3=Color3.fromRGB(255,0,0)
 			if not playedBonnie then
@@ -162,7 +162,7 @@ conn = RunService.RenderStepped:Connect(function()
 	if ChicaHRP then
 		local d = (hrp.Position - ChicaHRP.Position).Magnitude
 
-		if d>=14 and d<=16 then
+		if d==14 or d==15 or d==16 then
 			chicaKitchenTimer = nil
 			ChicaLabel.Text="CHICA\nRIGHT DOOR"
 			ChicaLabel.TextColor3=Color3.fromRGB(255,0,0)
