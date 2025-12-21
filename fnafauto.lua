@@ -89,9 +89,48 @@ local REQUIRED = 0.6
 local KITCHEN = 1.5
 
 --------------------------------------------------
--- MAIN LOOP (FIXED)
+-- CLEAN UNLOAD
 --------------------------------------------------
-RunService.RenderStepped:Connect(function()
+local unloaded = false
+local renderConn
+
+local function Unload()
+	if unloaded then return end
+	unloaded = true
+
+	if renderConn then
+		renderConn:Disconnect()
+	end
+
+	if gui then
+		gui:Destroy()
+	end
+end
+
+--------------------------------------------------
+-- DEATH HANDLER
+--------------------------------------------------
+local function HookDeath(character)
+	local humanoid = character:WaitForChild("Humanoid",5)
+	if not humanoid then return end
+
+	humanoid.Died:Connect(function()
+		Unload()
+	end)
+end
+
+if LocalPlayer.Character then
+	HookDeath(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(HookDeath)
+
+--------------------------------------------------
+-- MAIN LOOP (UNCHANGED LOGIC)
+--------------------------------------------------
+renderConn = RunService.RenderStepped:Connect(function()
+	if unloaded then return end
+
 	local char = LocalPlayer.Character
 	if not char then return end
 	local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -100,7 +139,7 @@ RunService.RenderStepped:Connect(function()
 	local now = os.clock()
 
 	--------------------------------------------------
-	-- FETCH HRPS (EVERY FRAME)
+	-- FETCH HRPS
 	--------------------------------------------------
 	local BonnieHRP  = GetHRP("Bonnie","BonnieNPC")
 	local ChicaHRP   = GetHRP("Chica","ChicaNPC")
