@@ -56,6 +56,21 @@ local JanitorTab = Window:CreateTab("JanitorTasks", 4483362458)
 local SettingsTab = Window:CreateTab("Settings", 4483362458)
 
 --------------------------------------------------
+-- STARTUP NOTIFICATIONS
+--------------------------------------------------
+Rayfield:Notify({
+	Title = "Controls",
+	Content = "Open/Close keybind: K",
+	Duration = 6
+})
+
+Rayfield:Notify({
+	Title = "Auto-Unload",
+	Content = "Script will automatically unload on death.",
+	Duration = 6
+})
+
+--------------------------------------------------
 -- NIGHTGUARD+ TAB
 --------------------------------------------------
 NightGuardPlusTab:CreateButton({
@@ -187,7 +202,6 @@ end)
 --------------------------------------------------
 -- PLAYER ESP
 --------------------------------------------------
-local PlayerESP=false
 local PLAYER_COLOR=Color3.fromRGB(0,255,255)
 
 local function ClearPlayerESP(p)
@@ -214,10 +228,16 @@ end
 -- INSTANT PROMPT
 --------------------------------------------------
 local InstantPrompt=false
+for _,obj in ipairs(Workspace:GetDescendants()) do
+	if obj:IsA("ProximityPrompt") and not obj:GetAttribute("OriginalHold") then
+		obj:SetAttribute("OriginalHold", obj.HoldDuration)
+	end
+end
+
 local function ApplyInstantPrompt()
 	for _,obj in ipairs(Workspace:GetDescendants()) do
 		if obj:IsA("ProximityPrompt") then
-			obj.HoldDuration=InstantPrompt and 0 or obj.HoldDuration
+			obj.HoldDuration = InstantPrompt and 0 or obj:GetAttribute("OriginalHold")
 		end
 	end
 end
@@ -284,7 +304,6 @@ SettingsTab:CreateToggle({
 	Name="Player ESP",
 	CurrentValue=false,
 	Callback=function(v)
-		PlayerESP=v
 		for _,p in ipairs(Players:GetPlayers()) do
 			if v then AddPlayerESP(p) else ClearPlayerESP(p) end
 		end
@@ -300,18 +319,56 @@ SettingsTab:CreateToggle({
 })
 
 --------------------------------------------------
--- UNLOAD BUTTON (RESTORED)
+-- UNLOAD (FULL CLEAN)
 --------------------------------------------------
-local function UnloadScript()
+local function DisableAllFeatures()
+	for n,data in pairs(Animatronics) do
+		data.Enabled=false
+		local f=AnimFolder:FindFirstChild(n)
+		if f then
+			for _,npc in ipairs(f:GetChildren()) do
+				ClearAnimESP(npc)
+			end
+		end
+	end
+
+	for _,p in ipairs(Players:GetPlayers()) do
+		ClearPlayerESP(p)
+	end
+
+	InstantPrompt=false
+	ApplyInstantPrompt()
 	DisableFullbright()
-	for _,c in pairs(Connections) do if c then c:Disconnect() end end
+
+	local ng=GetNightGuardGui()
+	if ng then ng.Enabled=false end
+end
+
+local function UnloadScript(auto)
+	DisableAllFeatures()
+
+	for _,c in pairs(Connections) do
+		if c then c:Disconnect() end
+	end
+
+	if auto then
+		Rayfield:Notify({
+			Title="Script Unloaded",
+			Content="Automatically unloaded on death.",
+			Duration=5
+		})
+		task.wait(1.2)
+	end
+
 	Rayfield:Destroy()
 	if CreditGui then CreditGui:Destroy() end
 end
 
 SettingsTab:CreateButton({
-	Name = "Unload Script",
-	Callback = UnloadScript
+	Name="Unload Script",
+	Callback=function()
+		UnloadScript(false)
+	end
 })
 
 --------------------------------------------------
@@ -319,7 +376,11 @@ SettingsTab:CreateButton({
 --------------------------------------------------
 local function HookDeath(char)
 	local hum=char:WaitForChild("Humanoid",5)
-	if hum then hum.Died:Connect(UnloadScript) end
+	if hum then
+		hum.Died:Connect(function()
+			UnloadScript(true)
+		end)
+	end
 end
 
 if LocalPlayer.Character then HookDeath(LocalPlayer.Character) end
