@@ -330,9 +330,6 @@ LocalPlayer.CharacterAdded:Connect(HookDeath)
 --------------------------------------------------
 Rayfield:Notify({
 	Title="Loaded",
-	Content="All features OFF by default.
-		keybind K
-		menu will unload after death
-		needs to be re executed",
+	Content="All features OFF by default.",
 	Duration=5
 })
