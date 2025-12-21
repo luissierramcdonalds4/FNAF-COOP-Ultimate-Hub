@@ -63,7 +63,7 @@ local ChicaLabel   = Panel("CHICA",UDim2.new(0.5,0,0.05,0))
 local FreddyLabel  = Panel("FREDDY",UDim2.new(0.5,0,0.52,0))
 
 --------------------------------------------------
--- SOUNDS (REPLACE IDS)
+-- SOUNDS
 --------------------------------------------------
 local function NewSound(id, looped)
 	local s = Instance.new("Sound")
@@ -87,6 +87,8 @@ local playedChica = false
 local foxyActive = false
 local freddyActive = false
 local chicaKitchenTimer = nil
+local bonnieDoorTimer = nil
+local chicaDoorTimer = nil
 
 --------------------------------------------------
 -- CLEAN UNLOAD
@@ -138,18 +140,24 @@ conn = RunService.RenderStepped:Connect(function()
 	local FreddyHRP  = GetHRP("Freddy","FreddyNPC")
 
 	--------------------------------------------------
-	-- BONNIE (14–16 studs)
+	-- BONNIE (14–16 studs, 1.5s)
 	--------------------------------------------------
 	if BonnieHRP then
 		local d = math.floor((hrp.Position - BonnieHRP.Position).Magnitude)
+
 		if d==14 or d==15 or d==16 then
-			BonnieLabel.Text="BONNIE\nLEFT DOOR"
-			BonnieLabel.TextColor3=Color3.fromRGB(255,0,0)
-			if not playedBonnie then
-				playedBonnie = true
-				BonnieAlarm:Play()
+			if not bonnieDoorTimer then
+				bonnieDoorTimer = now
+			elseif now - bonnieDoorTimer >= 1.5 then
+				BonnieLabel.Text="BONNIE\nLEFT DOOR"
+				BonnieLabel.TextColor3=Color3.fromRGB(255,0,0)
+				if not playedBonnie then
+					playedBonnie = true
+					BonnieAlarm:Play()
+				end
 			end
 		else
+			bonnieDoorTimer = nil
 			playedBonnie = false
 			BonnieLabel.Text="BONNIE\nSAFE"
 			BonnieLabel.TextColor3=Color3.fromRGB(0,255,0)
@@ -160,18 +168,23 @@ conn = RunService.RenderStepped:Connect(function()
 	-- CHICA (DOOR + KITCHEN)
 	--------------------------------------------------
 	if ChicaHRP then
-		local d = (hrp.Position - ChicaHRP.Position).Magnitude
+		local d = math.floor((hrp.Position - ChicaHRP.Position).Magnitude)
 
 		if d==14 or d==15 or d==16 then
 			chicaKitchenTimer = nil
-			ChicaLabel.Text="CHICA\nRIGHT DOOR"
-			ChicaLabel.TextColor3=Color3.fromRGB(255,0,0)
-			if not playedChica then
-				playedChica = true
-				ChicaAlarm:Play()
+			if not chicaDoorTimer then
+				chicaDoorTimer = now
+			elseif now - chicaDoorTimer >= 1.5 then
+				ChicaLabel.Text="CHICA\nRIGHT DOOR"
+				ChicaLabel.TextColor3=Color3.fromRGB(255,0,0)
+				if not playedChica then
+					playedChica = true
+					ChicaAlarm:Play()
+				end
 			end
 
 		elseif d>=50 and d<=65 then
+			chicaDoorTimer = nil
 			playedChica = false
 			if not chicaKitchenTimer then
 				chicaKitchenTimer = now
@@ -181,6 +194,7 @@ conn = RunService.RenderStepped:Connect(function()
 			end
 
 		else
+			chicaDoorTimer = nil
 			chicaKitchenTimer = nil
 			playedChica = false
 			ChicaLabel.Text="CHICA\nSAFE"
@@ -189,7 +203,7 @@ conn = RunService.RenderStepped:Connect(function()
 	end
 
 	--------------------------------------------------
-	-- FOXY (4 STAGES)
+	-- FOXY
 	--------------------------------------------------
 	if FoxyHRP then
 		local d = math.floor((hrp.Position - FoxyHRP.Position).Magnitude)
@@ -223,44 +237,18 @@ conn = RunService.RenderStepped:Connect(function()
 	end
 
 	--------------------------------------------------
-	-- FREDDY (REPLAYS EVERY TIME <20)
+	-- FREDDY
 	--------------------------------------------------
 	if FreddyHRP then
 		local d = math.floor((hrp.Position - FreddyHRP.Position).Magnitude)
 
-		if d == 103 then
-			FreddyLabel.Text="FREDDY\nCAM-1A"
-			FreddyLabel.TextColor3=Color3.fromRGB(0,255,0)
-			freddyActive = false
-
-		elseif (d>=79 and d<=102) and not (d>=86 and d<=92) then
-			FreddyLabel.Text="FREDDY\nCAM-1B"
-			FreddyLabel.TextColor3=Color3.fromRGB(0,255,0)
-			freddyActive = false
-
-		elseif d>=86 and d<=92 then
-			FreddyLabel.Text="FREDDY\nCAM-7"
-			FreddyLabel.TextColor3=Color3.fromRGB(0,255,0)
-			freddyActive = false
-
-		elseif d>=40 and d<=60 then
-			FreddyLabel.Text="FREDDY\nCAM-6"
-			FreddyLabel.TextColor3=Color3.fromRGB(255,255,0)
-			freddyActive = false
-
-		elseif d>=20 and d<=42 then
-			FreddyLabel.Text="FREDDY\nCAM-4A"
-			FreddyLabel.TextColor3=Color3.fromRGB(255,165,0)
-			freddyActive = false
-
-		elseif d < 20 then
+		if d < 20 then
 			FreddyLabel.Text="FREDDY\nCAM-4B"
 			FreddyLabel.TextColor3=Color3.fromRGB(255,0,0)
 			if not freddyActive then
 				freddyActive = true
 				FreddyAlarm:Play()
 			end
-
 		else
 			FreddyLabel.Text="FREDDY\nSAFE"
 			FreddyLabel.TextColor3=Color3.fromRGB(0,255,0)
