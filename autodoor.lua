@@ -7,7 +7,6 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -127,7 +126,7 @@ local function autoDoor()
         if d == 14 or d == 15 or d == 16 then
             if not chicaTimer then
                 chicaTimer = now
-            elseif now - chicaTimer >= 1.5 then
+            elseif now - chicaTimer >= 2.5 then
                 closeRight = true
             end
         else
@@ -149,13 +148,13 @@ task.spawn(function()
     while true do
         if foxyStallerEnabled then
             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-            task.wait(0.2)
+            task.wait(0.07)
             VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-            task.wait(0.2)
+            task.wait(0.07)
             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-            task.wait(0.2)
+            task.wait(0.07)
             VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-            task.wait(2)
+            task.wait(1.5)
         else
             task.wait(0.1)
         end
@@ -177,30 +176,61 @@ frame.BackgroundColor3 = Color3.fromRGB(10,10,15)
 frame.Active = true
 frame.Draggable = true
 
+Instance.new("UICorner", frame)
+
 local stroke = Instance.new("UIStroke", frame)
 stroke.Color = Color3.new(1,1,1)
 stroke.Thickness = 2
 
-Instance.new("UICorner", frame)
-
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
 title.BackgroundTransparency = 1
-title.Text = "Auto Door + Foxy Staller by Afton-Robotics"
+title.Text = "Auto Door + Foxy Staller"
 title.Font = Enum.Font.GothamBold
 title.TextSize = 13
 title.TextColor3 = Color3.fromRGB(180,120,255)
-title.TextWrapped = true
 
-local function notifyCam4B()
-    pcall(function()
-        StarterGui:SetCore("SendNotification", {
-            Title = "Foxy Staller",
-            Text = "⚠ Set camera to CAM 4B before enabling!",
-            Duration = 5
-        })
-    end)
-end
+--------------------------------------------------
+-- FOXY WARNING POPUP
+--------------------------------------------------
+
+local warningFrame = Instance.new("Frame", gui)
+warningFrame.Size = UDim2.new(0,300,0,120)
+warningFrame.Position = UDim2.new(0.5,-150,0.5,-60)
+warningFrame.BackgroundColor3 = Color3.fromRGB(20,20,30)
+warningFrame.Visible = false
+warningFrame.ZIndex = 10
+Instance.new("UICorner", warningFrame)
+
+local wStroke = Instance.new("UIStroke", warningFrame)
+wStroke.Color = Color3.fromRGB(255,170,0)
+wStroke.Thickness = 2
+
+local warningText = Instance.new("TextLabel", warningFrame)
+warningText.Size = UDim2.new(1,-20,1,-50)
+warningText.Position = UDim2.new(0,10,0,10)
+warningText.BackgroundTransparency = 1
+warningText.TextWrapped = true
+warningText.Text = "⚠ Put your camera on CAM 4B before toggling Foxy Staller"
+warningText.Font = Enum.Font.GothamBold
+warningText.TextSize = 14
+warningText.TextColor3 = Color3.fromRGB(255,200,80)
+warningText.ZIndex = 11
+
+local okButton = Instance.new("TextButton", warningFrame)
+okButton.Size = UDim2.new(0.5,-15,0,30)
+okButton.Position = UDim2.new(0.25,0,1,-40)
+okButton.Text = "OK"
+okButton.Font = Enum.Font.GothamBold
+okButton.TextSize = 14
+okButton.BackgroundColor3 = Color3.fromRGB(60,60,80)
+okButton.TextColor3 = Color3.fromRGB(255,200,80)
+okButton.ZIndex = 11
+Instance.new("UICorner", okButton)
+
+--------------------------------------------------
+-- TOGGLES
+--------------------------------------------------
 
 local function makeToggle(text, yPos, callback)
     local btn = Instance.new("TextButton", frame)
@@ -214,16 +244,25 @@ local function makeToggle(text, yPos, callback)
     Instance.new("UICorner", btn)
 
     local state = false
-    btn.MouseButton1Click:Connect(function()
-        state = not state
-        btn.Text = text .. ": " .. (state and "ON" or "OFF")
+    local acknowledged = false
 
-        if text == "Foxy Staller" and state then
-            notifyCam4B()
+    btn.MouseButton1Click:Connect(function()
+        if text == "Foxy Staller" and not acknowledged then
+            warningFrame.Visible = true
+            return
         end
 
+        state = not state
+        btn.Text = text .. ": " .. (state and "ON" or "OFF")
         callback(state)
     end)
+
+    if text == "Foxy Staller" then
+        okButton.MouseButton1Click:Connect(function()
+            acknowledged = true
+            warningFrame.Visible = false
+        end)
+    end
 end
 
 makeToggle("Auto Door", 40, function(v)
